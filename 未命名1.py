@@ -20,11 +20,12 @@ y = data['CP二分0，<140,1>=140']  # 目标分类
 del data['CP二分0，<140,1>=140']
 y = y.values.tolist()
 # data =  (data-data.min())/(data.max()-data.min())
+
 x_train, x_test, y_train, y_test = train_test_split(data, y, test_size=0.2, random_state=42)
 x_train =  (x_train-x_train.min())/(x_train.max()-x_train.min())
 x_test =  (x_test-x_test.min())/(x_test.max()-x_test.min())
 
-pca = PCA(n_components=10)
+pca = PCA(n_components=14)
 x_train=pca.fit_transform(x_train)
 x_test=pca.fit_transform(x_test)
 # matplotlib 中文显示
@@ -49,8 +50,8 @@ class Net(torch.nn.Module):
         初始化函数，接受自定义输入特征维数，隐藏层特征维数，输出层特征维数
         """
         super(Net, self).__init__()
-        self.fc1 = torch.nn.Linear(10, 6)  # 一个线性隐藏层
-        # self.fc2 = torch.nn.Linear(8, 6)
+        self.fc1 = torch.nn.Linear(14, 8)  # 一个线性隐藏层
+        self.fc2 = torch.nn.Linear(8, 6)
         self.fc3 = torch.nn.Linear(6, 4)
         self.fc4 = torch.nn.Linear(4, 2)
         # self.predict = torch.nn.Linear(n_hidden, n_output)  # 线性输出层
@@ -60,11 +61,11 @@ class Net(torch.nn.Module):
         前向传播过程
         """
         x = F.relu(self.fc1(x))
-        x = F.dropout(x,p=0.1)
-        # x = F.relu(self.fc2(x))
-        # x = F.dropout(x,p=0.2)
+        x = F.dropout(x,p=0.2)
+        x = F.relu(self.fc2(x))
+        x = F.dropout(x,p=0.2)
         x = F.relu(self.fc3(x))
-        x = F.dropout(x,p=0.1)        
+        x = F.dropout(x,p=0.2)        
         pre = self.fc4(x)
         # x = self.predict(x)
         return torch.log_softmax(pre, dim=1)
@@ -81,7 +82,7 @@ if use_cuda:
 print(net)
 optimizer = SGD(net.parameters(), lr=0.5)
 
-iter_num = 1000
+iter_num = 3000
 px, py = [], []
 
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -122,6 +123,14 @@ for i in range(iter_num):
         # 最后一个图像定格.
         plt.show()
         
+train_prediction = net(x_train)
+count=0       
+for i in range(len(y_train)):
+    if torch.argmax(train_prediction[i])==y_train[i]:
+        count = count+1
+pres = count/len(y_train)
+print('prediction:'+str(pres))
+    
 test_prediction = net(x_test)
 count=0       
 for i in range(len(y_test)):
@@ -129,4 +138,3 @@ for i in range(len(y_test)):
         count = count+1
 pres = count/len(y_test)
 print('prediction:'+str(pres))
-    
