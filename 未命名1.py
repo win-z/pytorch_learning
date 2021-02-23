@@ -13,19 +13,22 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 import numpy as np
+import math
 #read_excel()用来读取excel文件，记得加文件后缀
 data = pd.read_excel(r'C:\Users\10756\Desktop\data.xlsx') 
 data.dropna(axis=0, how='any', inplace=True)
 y = data['CP二分0，<140,1>=140']  # 目标分类
 del data['CP二分0，<140,1>=140']
+data.apply(np.log2)
 y = y.values.tolist()
-# data =  (data-data.min())/(data.max()-data.min())
+# data =  (data-data.mean())/(data.std())
 
 x_train, x_test, y_train, y_test = train_test_split(data, y, test_size=0.2, random_state=42)
-x_train =  (x_train-x_train.min())/(x_train.max()-x_train.min())
-x_test =  (x_test-x_test.min())/(x_test.max()-x_test.min())
-
-pca = PCA(n_components=14)
+# x_train =  (x_train-x_train.min())/(x_train.max()-x_train.min())
+# x_test =  (x_test-x_test.min())/(x_test.max()-x_test.min())
+x_train =  (x_train-x_train.mean())/(x_train.std())
+x_test =  (x_test-x_test.mean())/(x_test.std())
+pca = PCA(n_components=3)
 x_train=pca.fit_transform(x_train)
 x_test=pca.fit_transform(x_test)
 # matplotlib 中文显示
@@ -50,9 +53,9 @@ class Net(torch.nn.Module):
         初始化函数，接受自定义输入特征维数，隐藏层特征维数，输出层特征维数
         """
         super(Net, self).__init__()
-        self.fc1 = torch.nn.Linear(14, 8)  # 一个线性隐藏层
-        self.fc2 = torch.nn.Linear(8, 6)
-        self.fc3 = torch.nn.Linear(6, 4)
+        self.fc1 = torch.nn.Linear(3, 8)  # 一个线性隐藏层
+        # self.fc2 = torch.nn.Linear(8, 6)
+        self.fc3 = torch.nn.Linear(8, 4)
         self.fc4 = torch.nn.Linear(4, 2)
         # self.predict = torch.nn.Linear(n_hidden, n_output)  # 线性输出层
 
@@ -62,8 +65,8 @@ class Net(torch.nn.Module):
         """
         x = F.relu(self.fc1(x))
         x = F.dropout(x,p=0.2)
-        x = F.relu(self.fc2(x))
-        x = F.dropout(x,p=0.2)
+        # x = F.relu(self.fc2(x))
+        # x = F.dropout(x,p=0.2)
         x = F.relu(self.fc3(x))
         x = F.dropout(x,p=0.2)        
         pre = self.fc4(x)
@@ -82,7 +85,7 @@ if use_cuda:
 print(net)
 optimizer = SGD(net.parameters(), lr=0.5)
 
-iter_num = 3000
+iter_num = 2000
 px, py = [], []
 
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
@@ -106,22 +109,23 @@ for i in range(iter_num):
     optimizer.step()
 
     # 打印并记录当前的index 和 loss
-    print(i, " loss: ", loss.item())
-    px.append(i)
-    py.append(loss.item())
+    # print(i, " loss: ", loss.item())
+    # px.append(i)
+    # py.append(loss.item())
 
-    if i % 10 == 0:
-        # 动态画出loss走向 结果：loss.png
-        plt.cla()
-        plt.title('训练过程的loss曲线')
-        plt.xlabel('迭代次数')
-        plt.ylabel('损失')
-        plt.plot(px, py, 'r-', lw=1)
-        plt.text(0, 0, 'Loss=%.4f' % loss.item(), fontdict={'size': 20, 'color': 'red'})
-        plt.pause(0.1)
-    if i == iter_num - 1:
-        # 最后一个图像定格.
-        plt.show()
+    if i % 100 == 0:
+            print(i, " loss: ", loss.item())
+    #     # 动态画出loss走向 结果：loss.png
+    #     plt.cla()
+    #     plt.title('训练过程的loss曲线')
+    #     plt.xlabel('迭代次数')
+    #     plt.ylabel('损失')
+    #     plt.plot(px, py, 'r-', lw=1)
+    #     plt.text(0, 0, 'Loss=%.4f' % loss.item(), fontdict={'size': 20, 'color': 'red'})
+    #     plt.pause(0.1)
+    # if i == iter_num - 1:
+    #     # 最后一个图像定格.
+    #     plt.show()
         
 train_prediction = net(x_train)
 count=0       
@@ -129,7 +133,7 @@ for i in range(len(y_train)):
     if torch.argmax(train_prediction[i])==y_train[i]:
         count = count+1
 pres = count/len(y_train)
-print('prediction:'+str(pres))
+print('train_prediction:'+str(pres))
     
 test_prediction = net(x_test)
 count=0       
@@ -137,4 +141,4 @@ for i in range(len(y_test)):
     if torch.argmax(test_prediction[i])==y_test[i]:
         count = count+1
 pres = count/len(y_test)
-print('prediction:'+str(pres))
+print('test_prediction:'+str(pres))
