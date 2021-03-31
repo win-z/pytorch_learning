@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['未命名1.py', 'run.py', 'many.py', '..\\python\\bilibili.py', '未命名10.py', 'read_data.py', 'cookie.txt', 'geckodriver.log', 'run1.py']
+recent_files = ['read_data.py', '未命名10.py', '相关性.py', '未命名1.py', 'run.py', 'run1.py', '权重.py']
 

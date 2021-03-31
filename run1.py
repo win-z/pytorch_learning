@@ -18,7 +18,7 @@ y = data['CP二分0，<140,1>=140']  # 目标分类
 del data['CP二分0，<140,1>=140']
 data =  (data-data.min())/(data.max()-data.min())
 x = data.values.tolist()
-pca = PCA(n_components=10)
+pca = PCA(n_components=2)
 x=pca.fit_transform(x)
 # matplotlib 中文显示
 plt.rcParams['font.sans-serif'] = [u'SimHei']

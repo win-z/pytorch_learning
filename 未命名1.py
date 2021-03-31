@@ -9,13 +9,14 @@ import torch.nn.functional as F
 import torch.nn as nn
 from sklearn.datasets import load_iris
 from torch.optim import SGD
+from torch.optim import Adam
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 import numpy as np
 import math
 #read_excel()用来读取excel文件，记得加文件后缀
-data = pd.read_excel(r'C:\Users\10756\Desktop\data.xlsx') 
+data = pd.read_excel(r'C:\Users\10756\Desktop\data1.xlsx') 
 data.dropna(axis=0, how='any', inplace=True)
 y = data['CP二分0，<140,1>=140']  # 目标分类
 del data['CP二分0，<140,1>=140']
@@ -28,13 +29,16 @@ x_train, x_test, y_train, y_test = train_test_split(data, y, test_size=0.2, rand
 # x_test =  (x_test-x_test.min())/(x_test.max()-x_test.min())
 x_train =  (x_train-x_train.mean())/(x_train.std())
 x_test =  (x_test-x_test.mean())/(x_test.std())
-pca = PCA(n_components=3)
+pca = PCA(n_components=4)
 x_train=pca.fit_transform(x_train)
 x_test=pca.fit_transform(x_test)
 # matplotlib 中文显示
 plt.rcParams['font.sans-serif'] = [u'SimHei']
 plt.rcParams['axes.unicode_minus'] = False
-
+# x_train = x_train.values.tolist()
+# # y_train = y_train.values.tolist()
+# x_test = x_test.values.tolist()
+# y_test = y_test.values.tolist()
 # GPU 是否可用
 use_cuda = torch.cuda.is_available()
 print("use_cuda: ", use_cuda)
@@ -53,7 +57,7 @@ class Net(torch.nn.Module):
         初始化函数，接受自定义输入特征维数，隐藏层特征维数，输出层特征维数
         """
         super(Net, self).__init__()
-        self.fc1 = torch.nn.Linear(3, 8)  # 一个线性隐藏层
+        self.fc1 = torch.nn.Linear(4, 8)  # 一个线性隐藏层
         # self.fc2 = torch.nn.Linear(8, 6)
         self.fc3 = torch.nn.Linear(8, 4)
         self.fc4 = torch.nn.Linear(4, 2)
@@ -64,11 +68,11 @@ class Net(torch.nn.Module):
         前向传播过程
         """
         x = F.relu(self.fc1(x))
-        x = F.dropout(x,p=0.2)
+        x = F.dropout(x,p=0.3)
         # x = F.relu(self.fc2(x))
         # x = F.dropout(x,p=0.2)
         x = F.relu(self.fc3(x))
-        x = F.dropout(x,p=0.2)        
+        x = F.dropout(x,p=0.3)        
         pre = self.fc4(x)
         # x = self.predict(x)
         return torch.log_softmax(pre, dim=1)
@@ -83,9 +87,9 @@ if use_cuda:
     y_test = y_test.cuda()
     net = net.cuda()
 print(net)
-optimizer = SGD(net.parameters(), lr=0.5)
-
-iter_num = 2000
+# optimizer = SGD(net.parameters(), lr=0.2)
+optimizer = Adam(net.parameters(), lr=0.02, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
+iter_num = 3000
 px, py = [], []
 
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
